@@ -43,6 +43,17 @@ export function useBoard() {
       const card = fromCol.cards.find((c) => c.id === cardId)!;
       const updatedCard = { ...card, columnId: toColumnId, position: newPosition };
 
+      // Same column — reorder in place
+      if (fromColumnId === toColumnId) {
+        return prev.map((col) => {
+          if (col.id !== fromColumnId) return col;
+          const reordered = col.cards.filter((c) => c.id !== cardId);
+          reordered.splice(newPosition, 0, updatedCard);
+          return { ...col, cards: reordered.map((c, i) => ({ ...c, position: i })) };
+        });
+      }
+
+      // Different column — remove from source, insert into destination
       return prev.map((col) => {
         if (col.id === fromColumnId) {
           return { ...col, cards: col.cards.filter((c) => c.id !== cardId) };
@@ -50,10 +61,7 @@ export function useBoard() {
         if (col.id === toColumnId) {
           const newCards = [...col.cards];
           newCards.splice(newPosition, 0, updatedCard);
-          return {
-            ...col,
-            cards: newCards.map((c, i) => ({ ...c, position: i })),
-          };
+          return { ...col, cards: newCards.map((c, i) => ({ ...c, position: i })) };
         }
         return col;
       });
